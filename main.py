@@ -18,12 +18,12 @@
 
 # metadata
 " NINJA-IDE Time Tracker "
-__version__ = ' 0.1 '
+__version__ = ' 0.2 '
 __license__ = ' GPL '
 __author__ = ' juancarlospaco '
 __email__ = ' juancarlospaco@ubuntu.com '
 __url__ = ''
-__date__ = ' 20/04/2013 '
+__date__ = ' 20/06/2013 '
 __prj__ = ' timetracker '
 __docformat__ = 'html'
 __source__ = ''
@@ -32,20 +32,23 @@ __full_licence__ = ''
 
 # imports
 from os import path
+from sip import setapi
 from subprocess import call
 
-from PyQt4.QtGui import QIcon
-from PyQt4.QtGui import QLabel
-from PyQt4.QtGui import QDockWidget
-from PyQt4.QtGui import QPushButton
+from PyQt4.QtGui import QIcon, QLabel, QDockWidget, QPushButton
 
 try:
-    from PyKDE4.kdecore import *
+    from PyKDE4.kdecore import KPluginLoader, KUrl
     from PyKDE4.kparts import *
 except ImportError:
     pass
 
 from ninja_ide.core import plugin
+
+
+# API 2
+(setapi(a, 2) for a in ("QDate", "QDateTime", "QString", "QTime", "QUrl",
+                        "QTextStream", "QVariant"))
 
 
 # constants
@@ -62,24 +65,24 @@ class Main(plugin.Plugin):
         " Init Class dock "
         self.dock = QDockWidget()
         self.dock.setFeatures(QDockWidget.DockWidgetFloatable |
-                                           QDockWidget.DockWidgetMovable)
+                              QDockWidget.DockWidgetMovable)
         self.dock.setWindowTitle(__doc__)
         self.dock.setStyleSheet('QDockWidget::title{text-align: center;}')
         self.boton = QPushButton(QIcon.fromTheme("document-open-recent"),
                                  'Edit Track', self.dock)
-        self.boton.setToolTip('Edit iCal: ' + TRACK_FILE)
+        self.boton.setToolTip('Edit iCal: {}'.format(TRACK_FILE))
         try:
             self.factory = KPluginLoader("ktimetrackerpart").factory()
             self.part = self.factory.create(self)
             self.part.setReadWrite(True)
             self.part.closeUrl()
             self.part.openUrl(KUrl(str(TRACK_FILE)))
-            self.boton.clicked.connect(lambda: call('xdg-open ' + TRACK_FILE,
-                                                    shell=True))
+            self.boton.clicked.connect(lambda:
+                            call('xdg-open {}'.format(TRACK_FILE), shell=True))
             self.dock.setWidget(self.part.widget())
         except:
-            self.dock.setWidget(QLabel(""" <center>
-            <h3>ಠ_ಠ<br> ERROR: Please, install kTimeTracker App ! </h3><br>
+            self.dock.setWidget(QLabel(""" <center> <h3>ಠ_ಠ<br>
+            ERROR: Please, install kTimeTracker and PyKDE ! </h3><br>
             <br><i> (Sorry, cant embed non-Qt Apps). </i><center>"""))
         self.misc = self.locator.get_service('misc')
         self.misc.add_widget(self.dock, QIcon.fromTheme("user-away"), __doc__)
